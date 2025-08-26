@@ -1,0 +1,17 @@
+# Object files
+*.o
+
+# Executables
+pipex
+*.out
+
+# Backup files
+infile
+outfile
+
+# Backup files
+*~
+*.swp
+
+# IDE / editor files
+.vscode/

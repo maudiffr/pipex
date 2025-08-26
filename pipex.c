@@ -39,6 +39,14 @@ void	ft_exit(int error)
 	}
 }
 
+/* This function takes a command string (argv) and the environment (envp).
+   It first retrieves the PATH variable, splits it into all possible paths,
+   and then splits the command string into command and arguments.
+   It then iterates over the paths, joining each with the command name to
+   check if the executable exists and can be executed. Once a valid path
+   is found, it executes the command with execve(). If no valid path is
+   found, the function frees allocated memory and exits with an error. */
+
 void	exec(char *argv, char **envp)
 {
 	int		i;
@@ -54,12 +62,12 @@ void	exec(char *argv, char **envp)
 	while (all_path[i])
 	{
 		path_and_cmd = ft_strjoin(all_path[i], cmd[0]);
-		free(path_and_cmd);
 		if (access(path_and_cmd, F_OK | X_OK) == 0)
 			break ;
 		i++;
 		if (all_path[i] == NULL)
 		{
+			free(path_and_cmd);
 			ft_free(all_path);
 			ft_free(cmd);
 			ft_exit(4);
@@ -67,6 +75,11 @@ void	exec(char *argv, char **envp)
 	}
 	execve(path_and_cmd, cmd, envp);
 }
+
+/* The child process is responsible for the first command.
+   It opens the input file in read-only mode, duplicates it to stdin,
+   and redirects stdout to the write end of the pipe.
+   After setting up redirections, it calls exec() to run the first command. */
 
 void	child(int *fd, char **argv, char **envp)
 {
@@ -83,6 +96,11 @@ void	child(int *fd, char **argv, char **envp)
 	exec(argv[2], envp);
 }
 
+/* The parent process handles the second command.
+   It opens the output file (creating or truncating it), duplicates it
+   to stdout, and redirects stdin to the read end of the pipe.
+   Then, it calls exec() to run the second command with the redirected streams. */
+
 void	parent(int *fd, char **argv, char **envp)
 {
 	int	outfile;
@@ -97,6 +115,13 @@ void	parent(int *fd, char **argv, char **envp)
 	close(fd[0]);
 	exec(argv[3], envp);
 }
+
+/* The main function ensures the program is called with the right number
+   of arguments and validates the commands.
+   It creates a pipe and forks into two processes: the child executes
+   the first command with its output redirected into the pipe, while
+   the parent waits and then executes the second command, taking input
+   from the pipe and writing the final output to the file. */
 
 int	main(int argc, char **argv, char **envp)
 {
