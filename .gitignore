@@ -5,7 +5,7 @@
 pipex
 *.out
 
-# Backup files
+# Test files
 infile
 outfile
 
